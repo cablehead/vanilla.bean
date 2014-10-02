@@ -1,7 +1,7 @@
 """
 Vanilla Bean;
 
-Obligatory Sintra style (but concurrent!) micro-web framework for Vanilla.
+Obligatory Sinatra style (but concurrent!) micro-web framework for Vanilla.
 """
 
 import functools
