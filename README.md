@@ -20,3 +20,4 @@ Obligatory Sinatra style (but concurrent!) micro-web framework for [Vanilla][].
     pip install vanilla.bean
 ```
 
+[Vanilla]: https://github.com/cablehead/vanilla   "Vanilla"
