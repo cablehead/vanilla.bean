@@ -1,4 +1,4 @@
-# ![Vanilla](docs/images/vanilla-logo.png) Vanilla.Bean!
+# ![Vanilla](docs/images/vanilla-logo.png) vanilla.bean!
 
 Obligatory Sinatra style (but concurrent!) micro-web framework for [Vanilla][].
 
