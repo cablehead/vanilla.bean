@@ -1,4 +1,4 @@
-# ![Vanilla](docs/images/vanilla-logo.png) vanilla.bean!
+# ![Vanilla](docs/images/vanilla-logo.png) Welcome to Vanilla Bean!
 
 Obligatory Sinatra style (but concurrent!) micro-web framework for [Vanilla][].
 
@@ -11,8 +11,12 @@ Obligatory Sinatra style (but concurrent!) micro-web framework for [Vanilla][].
 
     @b.get('/')
     def index(request, response):
-        return 'Hello World'
+        response.send('Hello ')
+        h.sleep(1000)
+        return 'World.\n'
 ```
+
+![terminal](docs/images/terminal.gif)
 
 ## Installation
 
