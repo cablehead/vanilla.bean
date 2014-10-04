@@ -21,8 +21,6 @@ Example
 .. figure:: docs/images/terminal.gif
    :alt: terminal
 
-   terminal
-
 Installation
 ------------
 
