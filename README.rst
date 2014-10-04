@@ -18,7 +18,7 @@ Example
         h.sleep(1000)
         return 'World.\n'
 
-.. figure:: docs/images/terminal.gif
+.. figure:: https://github.com/cablehead/vanilla.bean/raw/master/docs/images/terminal.gif
    :alt: terminal
 
 Installation
