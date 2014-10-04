@@ -29,4 +29,4 @@ Installation
         pip install vanilla.bean
 
 
-.. |Vanilla| image:: docs/images/vanilla-logo.png
+.. |Vanilla| image:: http://vanillapy.readthedocs.org/en/latest/_static/logo.png
