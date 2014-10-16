@@ -21,6 +21,19 @@ Example
 .. figure:: https://github.com/cablehead/vanilla.bean/raw/master/docs/images/terminal.gif
    :alt: terminal
 
+Websockets
+----------
+
+.. code:: python
+
+    h = vanilla.Hub()
+    b = h.bean(port=8000)
+
+    @b.websocket('/echo')
+    def echo(ws):
+        while True:
+            ws.send(ws.recv())
+
 Installation
 ------------
 
