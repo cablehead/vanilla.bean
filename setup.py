@@ -29,7 +29,6 @@ class PyTest(TestCommand):
         errno = pytest.main(self.test_args)
         sys.exit(errno)
 
-
 setup(
     name='vanilla.bean',
     version=metadata['version'],
@@ -37,6 +36,7 @@ setup(
     author_email='andy@thecablelounge.com',
     install_requires=requirements,
     packages=find_packages(),
+    namespace_packages=['vanilla'],
     url='https://github.com/cablehead/vanilla.bean',
     license='MIT',
     description=description,
