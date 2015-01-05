@@ -14,7 +14,7 @@ Example
 
     @b.get('/')
     def index(request):
-        response = request.response()
+        response = request.reply()
         response.send('Hello ')
         h.sleep(1000)
         response.send('World\n')
