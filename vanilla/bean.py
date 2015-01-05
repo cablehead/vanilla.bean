@@ -11,32 +11,39 @@ import os
 
 import routes
 
+import vanilla.http
+
 
 def __plugin__(hub):
     def bean(
             port=0,
             host='127.0.0.1',
-            request_timeout=20000,
             base_path=None):
-        return Bean(hub, host, port, base_path, request_timeout)
+        return Bean(hub, host, port, base_path)
     return bean
 
 
+class HTTPStatus(Exception):
+    def __init__(self, status):
+        self.status = status
+
+
 class Bean(object):
-    def __init__(self, hub, host, port, base_path, request_timeout):
+    def __init__(self, hub, host, port, base_path):
         self.hub = hub
         self.base_path = base_path
-
-        self.server = self.hub.http.listen(
-            host=host,
-            port=port,
-            request_timeout=request_timeout,
-            serve=self.serve)
-
-        self.port = self.server.port
-
         self.routes = routes.Mapper()
         self.actions = {}
+
+        self.server = self.hub.http.listen(host=host, port=port)
+        self.port = self.server.port
+
+        @self.server.consume
+        def _(conn):
+            @self.hub.spawn
+            def _():
+                for request in conn:
+                    self.serve(request)
 
     def path(self, *a):
         # TODO: this isn't secure, use something like twisted.python.filepath
@@ -44,7 +51,22 @@ class Bean(object):
             a = [self.base_path] + list(a)
         return os.path.join(*a)
 
-    def serve(self, request, response):
+    class Request(vanilla.http.HTTPServer.Request):
+        def reply(self, status=None, headers=None):
+            if not status:
+                status = vanilla.http.Status(200)
+            if not headers:
+                headers = {}
+            sender, recver = self.server.hub.pipe()
+            super(Bean.Request, self).reply(status, headers, recver)
+            self.response = sender
+            return sender
+
+        def ResponseStatus(self, code):
+            status = vanilla.http.Status(code)
+            return HTTPStatus(status)
+
+    def serve(self, request):
         path, query = urllib.splitquery(request.path)
 
         if request.headers.get('upgrade', '').lower() == 'websocket':
@@ -54,11 +76,32 @@ class Bean(object):
         match = self.routes.match(path, environ=environ)
 
         if not match:
-            response.status = (404, 'Not Found')
-            return 'Sorry chief, page not found.'
+            status = vanilla.http.Status(404)
+            request.reply(status, {}, status[1])
+            return
 
         f = match.pop('f')
-        return f(request, response, **match)
+
+        if environ['REQUEST_METHOD'] == 'WEBSOCKET':
+            f(request.upgrade())
+            return
+
+        request.__class__ = Bean.Request
+        request.response = None
+
+        status = vanilla.http.Status(200)
+
+        try:
+            body = f(request, **match)
+        except HTTPStatus, e:
+            status = e.status
+            body = status[1]
+
+        if request.response:
+            request.response.close()
+            return
+
+        super(Bean.Request, request).reply(status, {}, body)
 
     def _add_route(self, path, conditions, f):
         def wrap(*a, **kw):
@@ -89,29 +132,27 @@ class Bean(object):
     def websocket(self, path):
         def match(environ, match_dict):
             return environ.get('REQUEST_METHOD') == 'WEBSOCKET'
+        return functools.partial(self._add_route, path, {'function': match})
 
-        def upgrade(request, response):
-            upgrade.handler(response.upgrade())
-
-        self._add_route(path, {'function': match}, upgrade)
-        return lambda f: setattr(upgrade, 'handler', f)
-
-    def _static(self, target, request, response, filename=None):
+    def _static(self, target, request, filename=None):
         if filename:
             filename = self.path(target, filename)
         else:
             filename = self.path(target)
 
         typ_, encoding = mimetypes.guess_type(filename)
-        response.headers['Content-Type'] = typ_ or 'text/plain'
+
+        headers = {}
+        headers['Content-Type'] = typ_ or 'text/plain'
         if encoding:
-            response.headers['Content-Encoding'] = encoding
+            headers['Content-Encoding'] = encoding
 
         try:
             fh = open(filename)
         except:
-            # TODO:
-            raise response.HTTP404
+            raise request.ResponseStatus(404)
+
+        response = request.reply(headers=headers)
 
         while True:
             data = fh.read(16*1024)

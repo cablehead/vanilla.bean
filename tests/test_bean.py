@@ -10,23 +10,62 @@ class TestBean(object):
         app = h.bean()
 
         @app.route('/')
-        def index(request, response):
+        def index(request):
             return 'index'
 
         response = self.conn(app).get('/').recv()
         assert response.status.code == 200
         assert response.consume() == 'index'
 
+    def test_chunked(self):
+        h = vanilla.Hub()
+        app = h.bean()
+
+        @app.route('/')
+        def index(request):
+            response = request.reply()
+            for i in xrange(3):
+                h.sleep(10)
+                response.send(str(i))
+
+        response = self.conn(app).get('/').recv()
+        assert response.status.code == 200
+        assert list(response.body) == ['0', '1', '2']
+
+    def test_raise_status(self):
+        h = vanilla.Hub()
+        app = h.bean()
+
+        @app.route('/')
+        def index(request):
+            raise request.ResponseStatus(401)
+
+        response = self.conn(app).get('/').recv()
+        assert response.status.code == 401
+        assert response.consume() == 'UNAUTHORIZED'
+
+    def test_not_found(self):
+        h = vanilla.Hub()
+        app = h.bean()
+
+        @app.route('/')
+        def index(request):
+            return 'index'
+
+        response = self.conn(app).get('/foo').recv()
+        assert response.status.code == 404
+        assert response.consume() == 'NOT FOUND'
+
     def test_method(self):
         h = vanilla.Hub()
         app = h.bean()
 
         @app.get('/')
-        def get(request, response):
+        def get(request):
             return request.method
 
         @app.post('/')
-        def get(request, response):
+        def get(request):
             return request.consume()
 
         @app.websocket('/')
