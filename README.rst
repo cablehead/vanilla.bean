@@ -13,10 +13,11 @@ Example
     b = h.bean(port=8000)
 
     @b.get('/')
-    def index(request, response):
+    def index(request):
+        response = request.response()
         response.send('Hello ')
         h.sleep(1000)
-        return 'World.\n'
+        response.send('World\n')
 
 .. figure:: https://github.com/cablehead/vanilla.bean/raw/master/docs/images/terminal.gif
    :alt: terminal
